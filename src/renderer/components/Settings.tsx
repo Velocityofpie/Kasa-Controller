@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { AppConfig, SmartStrip } from '../../shared/types';
 
 interface SettingsProps {
@@ -6,7 +6,7 @@ interface SettingsProps {
   onSave: (config: AppConfig) => void;
 }
 
-const Settings: React.FC<SettingsProps> = ({ config, onSave }) => {
+const Settings: React.FC<SettingsProps> = memo(({ config, onSave }) => {
   const [localConfig, setLocalConfig] = useState<AppConfig>(config);
   const [selectedStripId, setSelectedStripId] = useState<string | null>(
     localConfig.strips && localConfig.strips.length > 0 ? localConfig.strips[0].id : null
@@ -380,6 +380,8 @@ const Settings: React.FC<SettingsProps> = ({ config, onSave }) => {
       </div>
     </div>
   );
-};
+});
+
+Settings.displayName = 'Settings';
 
 export default Settings;

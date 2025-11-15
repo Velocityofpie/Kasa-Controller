@@ -18,6 +18,10 @@ const App: React.FC = () => {
     return saved === 'true';
   });
 
+  // Track reconnection attempts to prevent loops
+  const reconnectTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const isReconnectingRef = React.useRef(false);
+
   useEffect(() => {
     // Apply dark mode class to body
     if (isDarkMode) {
@@ -39,13 +43,29 @@ const App: React.FC = () => {
     window.electronAPI.onConnectionStatus((connected) => {
       setIsConnected(connected);
 
+      // Clear any pending reconnection attempts
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+
       // Attempt to reconnect after a delay if disconnected
-      if (!connected) {
-        setTimeout(() => {
-          window.electronAPI.reconnect().catch(() => {
-            // Reconnection failed, will try again on next disconnect
-          });
+      if (!connected && !isReconnectingRef.current) {
+        reconnectTimeoutRef.current = setTimeout(() => {
+          isReconnectingRef.current = true;
+          window.electronAPI.reconnect()
+            .catch(() => {
+              // Reconnection failed, will try again on next disconnect
+            })
+            .finally(() => {
+              isReconnectingRef.current = false;
+            });
         }, 5000); // Wait 5 seconds before attempting reconnect
+      }
+
+      // Reset reconnecting flag when connected
+      if (connected) {
+        isReconnectingRef.current = false;
       }
     });
 
@@ -54,8 +74,19 @@ const App: React.FC = () => {
     });
 
     window.electronAPI.onNewLog((log) => {
-      setLogs((prevLogs) => [...prevLogs, log]);
+      setLogs((prevLogs) => {
+        // Keep only last 200 logs in memory to reduce RAM usage
+        const newLogs = [...prevLogs, log];
+        return newLogs.length > 200 ? newLogs.slice(-200) : newLogs;
+      });
     });
+
+    // Cleanup on unmount
+    return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+    };
   }, []);
 
   const loadConfig = async () => {

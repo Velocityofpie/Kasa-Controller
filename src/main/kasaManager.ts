@@ -211,7 +211,7 @@ export class KasaManager extends EventEmitter {
     return results.every(result => result === true);
   }
 
-  private startStatusPolling(): void {
+  startStatusPolling(): void {
     if (this.statusPollInterval) {
       clearInterval(this.statusPollInterval);
     }

@@ -20,6 +20,6 @@ export const DEFAULT_CONFIG = {
   logRetentionDays: 30,
 };
 
-export const STATUS_POLL_INTERVAL = 5000; // 5 seconds
+export const STATUS_POLL_INTERVAL = 10000; // 10 seconds (reduced CPU usage)
 export const CONNECTION_TIMEOUT = 10000; // 10 seconds
 export const SHUTDOWN_GRACE_PERIOD = 3000; // 3 seconds to turn off speakers before shutdown

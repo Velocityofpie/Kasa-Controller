@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo, memo } from 'react';
 import { LogEntry } from '../../shared/types';
 
 interface LogsProps {
@@ -6,7 +6,7 @@ interface LogsProps {
   onClear: () => void;
 }
 
-const Logs: React.FC<LogsProps> = ({ logs, onClear }) => {
+const Logs: React.FC<LogsProps> = memo(({ logs, onClear }) => {
   const logListRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -28,6 +28,11 @@ const Logs: React.FC<LogsProps> = ({ logs, onClear }) => {
     }
   };
 
+  // Only show last 100 logs to improve performance
+  const recentLogs = useMemo(() => {
+    return logs.slice(-100);
+  }, [logs]);
+
   return (
     <div className="logs-container">
       <div className="logs-header">
@@ -43,8 +48,13 @@ const Logs: React.FC<LogsProps> = ({ logs, onClear }) => {
         </div>
       ) : (
         <div className="log-list" ref={logListRef}>
-          {logs.map((log, index) => (
-            <div key={index} className="log-entry">
+          {logs.length > 100 && (
+            <div className="log-entry" style={{ fontStyle: 'italic', opacity: 0.7 }}>
+              <span className="log-message">... {logs.length - 100} older logs hidden (showing last 100)</span>
+            </div>
+          )}
+          {recentLogs.map((log, index) => (
+            <div key={logs.length - recentLogs.length + index} className="log-entry">
               <span className="log-timestamp">{formatTimestamp(log.timestamp)}</span>
               <span className={`log-level ${log.level}`}>{log.level}</span>
               <span className="log-message">{log.message}</span>
@@ -54,6 +64,8 @@ const Logs: React.FC<LogsProps> = ({ logs, onClear }) => {
       )}
     </div>
   );
-};
+});
+
+Logs.displayName = 'Logs';
 
 export default Logs;

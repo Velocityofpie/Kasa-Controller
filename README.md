@@ -67,12 +67,71 @@ npm start
 
 ## Building for Distribution
 
-```powershell
-# Build Windows installer
-npm run package:win
+### Creating a Windows Installer (.exe)
 
-# The installer will be in the release/ folder
+**Important**: Close the app before building to avoid file locking issues.
+
+1. **Build the installer:**
+   ```powershell
+   npm run package:win
+   ```
+
+2. **Find your installer:**
+   - Location: `installer/Kasa Speaker Controller Setup 1.0.0.exe`
+   - Size: ~77 MB
+
+3. **Install the app:**
+   - Double-click the `.exe` file
+   - Choose installation location (default: `C:\Program Files\Kasa Speaker Controller\`)
+   - Creates desktop and Start Menu shortcuts
+   - No Node.js or development tools required to run!
+
+**Troubleshooting Build Issues:**
+- If you get file locking errors, close all instances of the app
+- Delete `installer/` and `release/` folders, then try again
+- Run in PowerShell (not Git Bash) for best results
+
+**Advanced Options:**
+```powershell
+# Build for all platforms (Windows, Linux, Mac)
+npm run package
+
+# Build without code signing (faster, but shows security warning)
+$env:CSC_IDENTITY_AUTO_DISCOVERY="false"
+npm run package:win
 ```
+
+## Adding to Windows Startup
+
+To automatically launch the app when Windows starts:
+
+### Method 1: Startup Folder (Recommended)
+
+1. **Open the Startup folder:**
+   - Press `Win + R`
+   - Type: `shell:startup`
+   - Press Enter
+
+2. **Create a shortcut:**
+   - Find your installed app at: `C:\Program Files\Kasa Speaker Controller\Kasa Speaker Controller.exe`
+   - Right-click the `.exe` file → "Create shortcut"
+   - Move the shortcut to the Startup folder you opened in step 1
+
+3. **Verify:**
+   - Restart your computer
+   - The app should launch automatically and minimize to system tray
+
+### Method 2: Task Scheduler (Advanced)
+
+For more control (delayed start, run as admin, etc.):
+
+1. Open Task Scheduler (`Win + R` → `taskschd.msc`)
+2. Click "Create Basic Task"
+3. Name: "Kasa Speaker Controller"
+4. Trigger: "When I log on"
+5. Action: "Start a program"
+6. Program: `C:\Program Files\Kasa Speaker Controller\Kasa Speaker Controller.exe`
+7. Finish and test by logging out/in
 
 ## Configuration
 

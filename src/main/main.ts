@@ -82,9 +82,23 @@ function createWindow(): void {
       event.preventDefault();
       mainWindow?.hide();
 
+      // Pause status polling when hidden to save resources
+      if (kasaManager) {
+        kasaManager.stopStatusPolling();
+        addLog('info', 'App minimized - pausing status updates to save resources');
+      }
+
       if (process.platform === 'win32') {
         showNotification('Kasa Speaker Controller', 'App minimized to system tray');
       }
+    }
+  });
+
+  // Resume status polling when window is shown
+  mainWindow.on('show', () => {
+    if (kasaManager && kasaManager.isDeviceConnected()) {
+      kasaManager.startStatusPolling();
+      addLog('info', 'App restored - resuming status updates');
     }
   });
 

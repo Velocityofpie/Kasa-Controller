@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Plug, AppConfig } from '../../shared/types';
 
 interface ControlPanelProps {
@@ -7,7 +7,7 @@ interface ControlPanelProps {
   onStripChange: (stripId: string) => void;
 }
 
-const ControlPanel: React.FC<ControlPanelProps> = ({ plugs, config, onStripChange }) => {
+const ControlPanel: React.FC<ControlPanelProps> = memo(({ plugs, config, onStripChange }) => {
   const handleToggle = async (plugIndex: number, currentStatus: string) => {
     if (currentStatus === 'ON') {
       await window.electronAPI.turnOff(plugIndex);
@@ -122,6 +122,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ plugs, config, onStripChang
       </div>
     </div>
   );
-};
+});
+
+ControlPanel.displayName = 'ControlPanel';
 
 export default ControlPanel;
