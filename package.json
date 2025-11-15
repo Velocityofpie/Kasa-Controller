@@ -1,6 +1,6 @@
 {
   "name": "kasa-speaker-controller",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Desktop app to control Kasa smart plug speakers with auto startup/shutdown",
   "main": "dist/main/main/main.js",
   "scripts": {
@@ -14,7 +14,8 @@
     "build:preload": "tsc -p tsconfig.preload.json",
     "build:renderer": "vite build",
     "package": "npm run build && electron-builder",
-    "package:win": "npm run build && electron-builder --win"
+    "package:win": "npm run build && electron-builder --win",
+    "package:portable": "npm run build && electron-builder --win portable"
   },
   "keywords": [
     "kasa",
@@ -55,11 +56,26 @@
     ],
     "win": {
       "target": [
-        "nsis"
+        "nsis",
+        "portable"
       ],
       "icon": "assets/icon.png",
       "sign": null,
       "verifyUpdateCodeSignature": false
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "deleteAppDataOnUninstall": false,
+      "allowElevation": true,
+      "removeDefaultUninstallWelcomePage": true,
+      "include": "installer-script.nsh",
+      "createDesktopShortcut": false,
+      "createStartMenuShortcut": true
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.${ext}"
     },
     "linux": {
       "target": [

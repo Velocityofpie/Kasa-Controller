@@ -19,6 +19,7 @@ export interface AppConfig {
   activeStripId: string | null;
   autoStartEnabled: boolean;
   autoOnAtLaunch: boolean;
+  autoOffOnShutdown: boolean;
   logRetentionDays: number;
 }
 

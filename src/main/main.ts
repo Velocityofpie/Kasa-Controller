@@ -6,8 +6,22 @@ import { KasaManager } from './kasaManager';
 import { AppConfig, LogEntry, SpeakerPlug } from '../shared/types';
 import { DEFAULT_CONFIG, SHUTDOWN_GRACE_PERIOD } from '../shared/constants';
 
+// Check for portable mode
+const fs = require('fs');
+const portablePaths = [
+  path.join(app.getAppPath(), 'portable.txt'),
+  path.join(path.dirname(app.getPath('exe')), 'portable.txt'),
+];
+// @ts-ignore - resourcesPath exists in packaged app
+if ((process as any).resourcesPath) {
+  // @ts-ignore
+  portablePaths.push(path.join((process as any).resourcesPath, 'portable.txt'));
+}
+const isPortable = portablePaths.some(p => fs.existsSync(p));
+
 // Store for persisting app configuration
 const store = new Store<{ config: AppConfig; logs: LogEntry[] }>({
+  cwd: isPortable ? path.dirname(app.getPath('exe')) : undefined,
   defaults: {
     config: DEFAULT_CONFIG,
     logs: [],
@@ -459,11 +473,17 @@ app.on('before-quit', async (event: any) => {
     event.preventDefault();
     isQuitting = true;
 
-    addLog('info', 'Application shutting down - turning off speakers...');
+    const config = store.get('config');
 
-    if (kasaManager) {
-      await kasaManager.turnOffAll();
-      kasaManager.disconnect();
+    // Only turn off speakers if auto-off on shutdown is enabled
+    if (config.autoOffOnShutdown && kasaManager) {
+      addLog('info', 'Application shutting down - turning off speakers...');
+      await kasaManager.shutdownSpeakers();
+    } else {
+      addLog('info', 'Application shutting down...');
+      if (kasaManager) {
+        kasaManager.disconnect();
+      }
     }
 
     // Short delay to ensure everything completes

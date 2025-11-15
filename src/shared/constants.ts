@@ -17,6 +17,7 @@ export const DEFAULT_CONFIG = {
   activeStripId: 'default-strip',
   autoStartEnabled: false,
   autoOnAtLaunch: false,
+  autoOffOnShutdown: false,
   logRetentionDays: 30,
 };
 

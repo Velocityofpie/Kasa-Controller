@@ -360,6 +360,26 @@ const Settings: React.FC<SettingsProps> = memo(({ config, onSave }) => {
       </div>
 
       <div className="settings-section">
+        <h3>Shutdown Options</h3>
+        <div className="form-group">
+          <div className="checkbox-group">
+            <input
+              type="checkbox"
+              id="autoOffOnShutdown"
+              checked={localConfig.autoOffOnShutdown}
+              onChange={(e) =>
+                setLocalConfig({ ...localConfig, autoOffOnShutdown: e.target.checked })
+              }
+            />
+            <label htmlFor="autoOffOnShutdown">Turn off all speakers when app closes or Windows shuts down</label>
+          </div>
+          <p style={{ marginTop: '8px', fontSize: '13px', color: 'var(--text-secondary)', marginLeft: '24px' }}>
+            When enabled, all speakers will automatically turn off when you quit the app or Windows shuts down.
+          </p>
+        </div>
+      </div>
+
+      <div className="settings-section">
         <h3>Logging</h3>
         <div className="form-group">
           <label>Log Retention (days)</label>

@@ -211,6 +211,24 @@ export class KasaManager extends EventEmitter {
     return results.every(result => result === true);
   }
 
+  async shutdownSpeakers(): Promise<boolean> {
+    this.log('info', 'Shutting down all speakers...');
+    try {
+      // Turn off all plugs
+      const results = await Promise.all(
+        this.plugIndexes.map(index => this.turnOff(index))
+      );
+
+      // Stop polling
+      this.stopStatusPolling();
+
+      return results.every(result => result === true);
+    } catch (error) {
+      this.log('error', `Failed to shutdown speakers: ${error instanceof Error ? error.message : String(error)}`);
+      return false;
+    }
+  }
+
   startStatusPolling(): void {
     if (this.statusPollInterval) {
       clearInterval(this.statusPollInterval);

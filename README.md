@@ -76,20 +76,49 @@ npm start
    npm run package:win
    ```
 
-2. **Find your installer:**
-   - Location: `installer/Kasa Speaker Controller Setup 1.0.0.exe`
-   - Size: ~77 MB
+2. **Find your builds:**
+   - **Installer**: `installer/Kasa Speaker Controller Setup 1.0.1.exe` (~77 MB)
+   - **Portable**: `installer/Kasa Speaker Controller-1.0.1-portable.exe` (~77 MB)
 
-3. **Install the app:**
-   - Double-click the `.exe` file
-   - Choose installation location (default: `C:\Program Files\Kasa Speaker Controller\`)
-   - Creates desktop and Start Menu shortcuts
-   - No Node.js or development tools required to run!
+3. **Installation Options:**
+
+   **Standard Install** (recommended):
+   - Double-click the Setup `.exe` file
+   - During installation, you'll be asked if you want a Desktop shortcut
+   - Installs to `C:\Program Files\Kasa Speaker Controller\`
+   - Creates Start Menu shortcut
+   - Settings stored in `%APPDATA%\kasa-speaker-controller`
+   - Easy uninstall from Windows Settings
+
+   **Portable Mode** (no installation):
+   - Extract the portable `.exe` to any folder (e.g., USB drive, Dropbox)
+   - Create a text file named `portable.txt` in the same folder as the `.exe`
+   - Run the `.exe` directly - no installation needed
+   - All settings stored in the same folder as the app
+   - Perfect for running from USB drives or keeping everything in one place
 
 **Troubleshooting Build Issues:**
-- If you get file locking errors, close all instances of the app
-- Delete `installer/` and `release/` folders, then try again
+
+If you get the error: `The process cannot access the file because it is being used by another process`
+
+1. **Close the app completely:**
+   - Right-click the system tray icon → "Quit"
+   - Or open Task Manager (`Ctrl+Shift+Esc`) and end all "Kasa Speaker Controller" and "electron.exe" processes
+
+2. **Delete locked folders:**
+   ```powershell
+   Remove-Item -Recurse -Force installer -ErrorAction SilentlyContinue
+   Remove-Item -Recurse -Force release -ErrorAction SilentlyContinue
+   ```
+
+3. **Wait a few seconds**, then rebuild:
+   ```powershell
+   npm run package:win
+   ```
+
+**Other tips:**
 - Run in PowerShell (not Git Bash) for best results
+- If still stuck, restart your computer to release all file locks
 
 **Advanced Options:**
 ```powershell
