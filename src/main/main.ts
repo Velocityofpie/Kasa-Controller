@@ -1,7 +1,8 @@
 // @ts-ignore - Use bare require for electron
-const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, Notification } = require('electron');
+const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, Notification, dialog } = require('electron');
 import * as path from 'path';
 import Store from 'electron-store';
+import { autoUpdater } from 'electron-updater';
 import { KasaManager } from './kasaManager';
 import { AppConfig, LogEntry, SpeakerPlug } from '../shared/types';
 import { DEFAULT_CONFIG, SHUTDOWN_GRACE_PERIOD } from '../shared/constants';
@@ -352,6 +353,60 @@ async function handleShutdownRequest(): Promise<void> {
   }
 }
 
+// Setup auto-updater
+function setupAutoUpdater(): void {
+  // Configure auto-updater
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on('checking-for-update', () => {
+    addLog('info', 'Checking for updates...');
+  });
+
+  autoUpdater.on('update-available', (info: any) => {
+    addLog('info', `Update available: v${info.version}`);
+    mainWindow?.webContents.send('update-available', {
+      version: info.version,
+      releaseDate: info.releaseDate,
+      releaseNotes: info.releaseNotes,
+    });
+  });
+
+  autoUpdater.on('update-not-available', () => {
+    addLog('info', 'No updates available');
+    mainWindow?.webContents.send('update-not-available');
+  });
+
+  autoUpdater.on('download-progress', (progress: any) => {
+    mainWindow?.webContents.send('download-progress', {
+      bytesPerSecond: progress.bytesPerSecond,
+      percent: progress.percent,
+      transferred: progress.transferred,
+      total: progress.total,
+    });
+  });
+
+  autoUpdater.on('update-downloaded', () => {
+    addLog('info', 'Update downloaded - ready to install');
+    mainWindow?.webContents.send('update-downloaded');
+
+    // Show notification
+    showNotification('Update Ready', 'A new version has been downloaded. Restart to install.');
+  });
+
+  autoUpdater.on('error', (error: Error) => {
+    addLog('error', `Auto-updater error: ${error.message}`);
+    mainWindow?.webContents.send('update-error', error.message);
+  });
+
+  // Check for updates on startup (with delay to not interfere with app startup)
+  setTimeout(() => {
+    autoUpdater.checkForUpdates().catch((err: any) => {
+      addLog('warn', `Failed to check for updates: ${err.message}`);
+    });
+  }, 5000);
+}
+
 // IPC Handlers
 function setupIpcHandlers(): void {
   ipcMain.handle('get-config', () => {
@@ -447,14 +502,63 @@ function setupIpcHandlers(): void {
     await handleShutdownRequest();
     return true;
   });
+
+  // App info
+  ipcMain.handle('get-app-version', () => {
+    return app.getVersion();
+  });
+
+  // Auto-updater handlers
+  ipcMain.handle('check-for-updates', async () => {
+    try {
+      return await autoUpdater.checkForUpdates();
+    } catch (error: any) {
+      addLog('error', `Failed to check for updates: ${error.message}`);
+      return { error: error.message };
+    }
+  });
+
+  ipcMain.handle('download-update', async () => {
+    try {
+      await autoUpdater.downloadUpdate();
+    } catch (error: any) {
+      addLog('error', `Failed to download update: ${error.message}`);
+    }
+  });
+
+  ipcMain.handle('install-update', () => {
+    isQuitting = true;
+    autoUpdater.quitAndInstall();
+  });
 }
 
 // App lifecycle
 app.whenReady().then(async () => {
   setupIpcHandlers();
+
+  const config = store.get('config');
+  const wasAutoStarted = app.getLoginItemSettings().wasOpenedAtLogin;
+
   createWindow();
   createTray();
+
+  // Determine if we should start hidden
+  // Start hidden if: auto-started OR user preference is to minimize to tray on startup
+  const shouldStartHidden = wasAutoStarted || config.minimizeToTrayOnStartup;
+
+  if (shouldStartHidden) {
+    mainWindow?.hide();
+    if (config.minimizeToTrayOnStartup && !wasAutoStarted) {
+      addLog('info', 'Starting minimized to system tray (user preference)');
+    } else {
+      addLog('info', 'App auto-started - running in system tray');
+    }
+  }
+
   await initializeKasaManager();
+
+  // Setup auto-updater (after app is ready)
+  setupAutoUpdater();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

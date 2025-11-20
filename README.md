@@ -65,6 +65,8 @@ npm run dev
 npm start
 ```
 
+**Note:** If you run the app in development mode and enable "Launch app on Windows startup" in Settings, it may create a startup entry pointing to `node_modules\electron\dist\electron.exe`. This is a development artifact and won't affect the installed production version. If you see this unwanted entry in Task Manager > Startup, simply disable it from within the app's Settings or from Windows Settings > Apps > Startup.
+
 ## Building for Distribution
 
 ### Creating a Windows Installer (.exe)

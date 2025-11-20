@@ -1,6 +1,6 @@
 // @ts-ignore
 const { contextBridge, ipcRenderer } = require('electron');
-import { AppConfig, LogEntry, SpeakerPlug } from '../shared/types';
+import { AppConfig, LogEntry, SpeakerPlug, UpdateInfo, UpdateProgress } from '../shared/types';
 
 // Expose protected methods that allow the renderer process to use
 // ipcRenderer without exposing the entire object
@@ -32,6 +32,29 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onSpeakerStatus: (callback: (status: SpeakerPlug[]) => void) => {
     ipcRenderer.on('speaker-status', (_: any, status: any) => callback(status));
   },
+
+  // App info
+  getAppVersion: (): Promise<string> => ipcRenderer.invoke('get-app-version'),
+
+  // Auto-updater
+  checkForUpdates: (): Promise<any> => ipcRenderer.invoke('check-for-updates'),
+  downloadUpdate: (): Promise<void> => ipcRenderer.invoke('download-update'),
+  installUpdate: (): void => ipcRenderer.invoke('install-update'),
+  onUpdateAvailable: (callback: (info: UpdateInfo) => void) => {
+    ipcRenderer.on('update-available', (_: any, info: any) => callback(info));
+  },
+  onUpdateNotAvailable: (callback: () => void) => {
+    ipcRenderer.on('update-not-available', () => callback());
+  },
+  onUpdateDownloaded: (callback: () => void) => {
+    ipcRenderer.on('update-downloaded', () => callback());
+  },
+  onDownloadProgress: (callback: (progress: UpdateProgress) => void) => {
+    ipcRenderer.on('download-progress', (_: any, progress: any) => callback(progress));
+  },
+  onUpdateError: (callback: (error: string) => void) => {
+    ipcRenderer.on('update-error', (_: any, error: any) => callback(error));
+  },
 });
 
 // TypeScript type definition for window.electronAPI
@@ -52,6 +75,17 @@ declare global {
       shutdownPC: () => Promise<boolean>;
       onConnectionStatus: (callback: (connected: boolean) => void) => void;
       onSpeakerStatus: (callback: (status: SpeakerPlug[]) => void) => void;
+      // App info
+      getAppVersion: () => Promise<string>;
+      // Auto-updater
+      checkForUpdates: () => Promise<any>;
+      downloadUpdate: () => Promise<void>;
+      installUpdate: () => void;
+      onUpdateAvailable: (callback: (info: UpdateInfo) => void) => void;
+      onUpdateNotAvailable: (callback: () => void) => void;
+      onUpdateDownloaded: (callback: () => void) => void;
+      onDownloadProgress: (callback: (progress: UpdateProgress) => void) => void;
+      onUpdateError: (callback: (error: string) => void) => void;
     };
   }
 }

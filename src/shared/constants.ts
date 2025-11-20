@@ -19,6 +19,7 @@ export const DEFAULT_CONFIG = {
   autoOnAtLaunch: false,
   autoOffOnShutdown: false,
   logRetentionDays: 30,
+  minimizeToTrayOnStartup: false,
 };
 
 export const STATUS_POLL_INTERVAL = 10000; // 10 seconds (reduced CPU usage)

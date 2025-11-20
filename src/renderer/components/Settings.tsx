@@ -1,5 +1,5 @@
-import React, { useState, memo } from 'react';
-import { AppConfig, SmartStrip } from '../../shared/types';
+import React, { useState, useEffect, memo } from 'react';
+import { AppConfig, SmartStrip, UpdateInfo, UpdateProgress } from '../../shared/types';
 
 interface SettingsProps {
   config: AppConfig;
@@ -11,6 +11,58 @@ const Settings: React.FC<SettingsProps> = memo(({ config, onSave }) => {
   const [selectedStripId, setSelectedStripId] = useState<string | null>(
     localConfig.strips && localConfig.strips.length > 0 ? localConfig.strips[0].id : null
   );
+
+  // Update-related state
+  const [appVersion, setAppVersion] = useState<string>('');
+  const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'error'>('idle');
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [updateProgress, setUpdateProgress] = useState<UpdateProgress | null>(null);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+
+  // Fetch app version and set up update listeners
+  useEffect(() => {
+    // Get app version
+    window.electronAPI.getAppVersion().then(setAppVersion);
+
+    // Set up update event listeners
+    window.electronAPI.onUpdateAvailable((info) => {
+      setUpdateInfo(info);
+      setUpdateStatus('available');
+    });
+
+    window.electronAPI.onUpdateNotAvailable(() => {
+      setUpdateStatus('idle');
+    });
+
+    window.electronAPI.onDownloadProgress((progress) => {
+      setUpdateProgress(progress);
+      setUpdateStatus('downloading');
+    });
+
+    window.electronAPI.onUpdateDownloaded(() => {
+      setUpdateStatus('downloaded');
+    });
+
+    window.electronAPI.onUpdateError((error) => {
+      setUpdateError(error);
+      setUpdateStatus('error');
+    });
+  }, []);
+
+  const handleCheckForUpdates = async () => {
+    setUpdateStatus('checking');
+    setUpdateError(null);
+    await window.electronAPI.checkForUpdates();
+  };
+
+  const handleDownloadUpdate = async () => {
+    setUpdateStatus('downloading');
+    await window.electronAPI.downloadUpdate();
+  };
+
+  const handleInstallUpdate = () => {
+    window.electronAPI.installUpdate();
+  };
 
   const handleSave = () => {
     onSave(localConfig);
@@ -119,15 +171,15 @@ const Settings: React.FC<SettingsProps> = memo(({ config, onSave }) => {
     });
   };
 
-  const handlePlugIndexChange = (stripId: string, oldIndex: number, newIndex: number) => {
+  const handlePlugIndexChange = (stripId: string, arrayIndex: number, newIndex: number) => {
     setLocalConfig({
       ...localConfig,
       strips: (localConfig.strips || []).map((s) =>
         s.id === stripId
           ? {
               ...s,
-              plugs: s.plugs.map((p) =>
-                p.index === oldIndex ? { ...p, index: newIndex } : p
+              plugs: s.plugs.map((p, idx) =>
+                idx === arrayIndex ? { ...p, index: newIndex } : p
               ),
             }
           : s
@@ -263,7 +315,7 @@ const Settings: React.FC<SettingsProps> = memo(({ config, onSave }) => {
             Configure which plugs on this power strip to control. Use ↑↓ buttons to reorder how they appear on the dashboard.
           </p>
           {selectedStrip.plugs.map((plug, arrayIndex) => (
-            <div key={plug.index} style={{ display: 'flex', gap: '12px', marginBottom: '12px', alignItems: 'flex-end' }}>
+            <div key={`plug-${arrayIndex}`} style={{ display: 'flex', gap: '12px', marginBottom: '12px', alignItems: 'flex-end' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <button
                   onClick={() => movePlugUp(selectedStrip.id, arrayIndex)}
@@ -303,7 +355,12 @@ const Settings: React.FC<SettingsProps> = memo(({ config, onSave }) => {
                 <input
                   type="number"
                   value={plug.index}
-                  onChange={(e) => handlePlugIndexChange(selectedStrip.id, plug.index, parseInt(e.target.value, 10))}
+                  onChange={(e) => {
+                    const newIndex = parseInt(e.target.value, 10);
+                    if (!isNaN(newIndex)) {
+                      handlePlugIndexChange(selectedStrip.id, arrayIndex, newIndex);
+                    }
+                  }}
                   min="0"
                   max="10"
                   placeholder="0"
@@ -350,6 +407,22 @@ const Settings: React.FC<SettingsProps> = memo(({ config, onSave }) => {
           <div className="checkbox-group">
             <input
               type="checkbox"
+              id="minimizeToTray"
+              checked={localConfig.minimizeToTrayOnStartup}
+              onChange={(e) =>
+                setLocalConfig({ ...localConfig, minimizeToTrayOnStartup: e.target.checked })
+              }
+            />
+            <label htmlFor="minimizeToTray">Start minimized to system tray</label>
+          </div>
+          <p style={{ marginTop: '8px', fontSize: '13px', color: 'var(--text-secondary)', marginLeft: '24px' }}>
+            When enabled, the app will start hidden in the system tray instead of showing the main window.
+          </p>
+        </div>
+        <div className="form-group">
+          <div className="checkbox-group">
+            <input
+              type="checkbox"
               id="autoOn"
               checked={localConfig.autoOnAtLaunch}
               onChange={handleAutoOnChange}
@@ -390,6 +463,81 @@ const Settings: React.FC<SettingsProps> = memo(({ config, onSave }) => {
             min="1"
             max="365"
           />
+        </div>
+      </div>
+
+      <div className="settings-section">
+        <h3>About & Updates</h3>
+        <div className="form-group">
+          <p style={{ fontSize: '14px', marginBottom: '12px' }}>
+            <strong>Version:</strong> {appVersion || 'Loading...'}
+          </p>
+
+          {updateStatus === 'idle' && (
+            <button className="btn-secondary" onClick={handleCheckForUpdates}>
+              Check for Updates
+            </button>
+          )}
+
+          {updateStatus === 'checking' && (
+            <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+              Checking for updates...
+            </p>
+          )}
+
+          {updateStatus === 'available' && updateInfo && (
+            <div>
+              <p style={{ fontSize: '14px', marginBottom: '12px', color: 'var(--success)' }}>
+                Update available: v{updateInfo.version}
+              </p>
+              <button className="btn-success" onClick={handleDownloadUpdate}>
+                Download Update
+              </button>
+            </div>
+          )}
+
+          {updateStatus === 'downloading' && updateProgress && (
+            <div>
+              <p style={{ fontSize: '14px', marginBottom: '8px' }}>
+                Downloading update... {Math.round(updateProgress.percent)}%
+              </p>
+              <div style={{
+                width: '100%',
+                height: '8px',
+                background: 'var(--bg-tertiary)',
+                border: '2px solid var(--border-color)',
+              }}>
+                <div style={{
+                  width: `${updateProgress.percent}%`,
+                  height: '100%',
+                  background: 'var(--primary)',
+                  transition: 'width 0.3s ease',
+                }} />
+              </div>
+            </div>
+          )}
+
+          {updateStatus === 'downloaded' && (
+            <div>
+              <p style={{ fontSize: '14px', marginBottom: '12px', color: 'var(--success)' }}>
+                Update downloaded and ready to install!
+              </p>
+              <button className="btn-primary" onClick={handleInstallUpdate}>
+                Restart & Install
+              </button>
+            </div>
+          )}
+
+          {updateStatus === 'error' && (
+            <div>
+              <p style={{ fontSize: '14px', marginBottom: '12px', color: 'var(--danger)' }}>
+                Update error: {updateError}
+              </p>
+              <button className="btn-secondary" onClick={handleCheckForUpdates}>
+                Retry
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

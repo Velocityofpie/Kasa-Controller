@@ -21,6 +21,20 @@ export interface AppConfig {
   autoOnAtLaunch: boolean;
   autoOffOnShutdown: boolean;
   logRetentionDays: number;
+  minimizeToTrayOnStartup: boolean;
+}
+
+export interface UpdateInfo {
+  version: string;
+  releaseDate?: string;
+  releaseNotes?: string;
+}
+
+export interface UpdateProgress {
+  bytesPerSecond: number;
+  percent: number;
+  transferred: number;
+  total: number;
 }
 
 // Legacy type alias for backwards compatibility
