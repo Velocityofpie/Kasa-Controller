@@ -2,6 +2,8 @@
 
 Desktop application to control Kasa smart plug with automatic startup and shutdown capabilities.
 
+![Dashboard](docs/Kasa_Speaker_Controller_U6fLMdWyok.png)
+
 ## Features
 
 - 🔌 Control Kasa smart strip plugs (turn on/off individual plugs)
