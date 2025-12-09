@@ -469,14 +469,79 @@ const Settings: React.FC<SettingsProps> = memo(({ config, onSave }) => {
       <div className="settings-section">
         <h3>About & Updates</h3>
         <div className="form-group">
-          <p style={{ fontSize: '14px', marginBottom: '12px' }}>
-            <strong>Version:</strong> {appVersion || 'Loading...'}
+          <div style={{
+            padding: '16px',
+            background: 'var(--bg-tertiary)',
+            border: '3px solid var(--border-color)',
+            marginBottom: '16px',
+            boxShadow: '4px 4px 0 rgba(0, 0, 0, 0.2)'
+          }}>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+              Current Version
+            </p>
+            <p style={{ fontSize: '24px', fontWeight: 'bold', fontFamily: 'Courier New, monospace', margin: 0 }}>
+              v{appVersion || 'Loading...'}
+            </p>
+          </div>
+
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.5' }}>
+            This app automatically checks for updates on startup. When a new version is available,
+            you can download and install it without reinstalling the app.
           </p>
 
           {updateStatus === 'idle' && (
-            <button className="btn-secondary" onClick={handleCheckForUpdates}>
-              Check for Updates
-            </button>
+            <>
+              <button className="btn-secondary" onClick={handleCheckForUpdates}>
+                Check for Updates
+              </button>
+              <details style={{ marginTop: '16px', fontSize: '13px' }}>
+                <summary style={{ cursor: 'pointer', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                  How to publish updates (for developers)
+                </summary>
+                <div style={{
+                  marginTop: '8px',
+                  padding: '12px',
+                  background: 'var(--bg-tertiary)',
+                  border: '2px solid var(--border-color)',
+                  fontFamily: 'Courier New, monospace',
+                  fontSize: '12px',
+                  lineHeight: '1.6'
+                }}>
+                  <p style={{ marginBottom: '8px' }}><strong>1. Update package.json:</strong></p>
+                  <p style={{ marginLeft: '16px', marginBottom: '12px' }}>
+                    Set "owner" and "repo" in the publish section to your GitHub username and repository name.
+                  </p>
+
+                  <p style={{ marginBottom: '8px' }}><strong>2. Bump version:</strong></p>
+                  <p style={{ marginLeft: '16px', marginBottom: '12px', color: 'var(--text-secondary)' }}>
+                    Change version in package.json (e.g., 1.0.3 → 1.0.4)
+                  </p>
+
+                  <p style={{ marginBottom: '8px' }}><strong>3. Build:</strong></p>
+                  <p style={{ marginLeft: '16px', marginBottom: '12px', color: 'var(--text-secondary)' }}>
+                    npm run package:win
+                  </p>
+
+                  <p style={{ marginBottom: '8px' }}><strong>4. Create GitHub Release:</strong></p>
+                  <p style={{ marginLeft: '16px', marginBottom: '4px', color: 'var(--text-secondary)' }}>
+                    • Go to GitHub repository → Releases → Create new release
+                  </p>
+                  <p style={{ marginLeft: '16px', marginBottom: '4px', color: 'var(--text-secondary)' }}>
+                    • Tag: v1.0.4 (match version in package.json)
+                  </p>
+                  <p style={{ marginLeft: '16px', marginBottom: '4px', color: 'var(--text-secondary)' }}>
+                    • Upload from installer folder: .exe and latest.yml
+                  </p>
+                  <p style={{ marginLeft: '16px', marginBottom: '12px', color: 'var(--text-secondary)' }}>
+                    • Publish release
+                  </p>
+
+                  <p style={{ marginTop: '12px', padding: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+                    📖 For detailed instructions, see docs/AUTO-UPDATE.md
+                  </p>
+                </div>
+              </details>
+            </>
           )}
 
           {updateStatus === 'checking' && (
