@@ -1,10 +1,10 @@
 # Kasa Speaker Controller
 
-Desktop application to control Kasa smart plug speakers with automatic startup and shutdown capabilities.
+Desktop application to control Kasa smart plug with automatic startup and shutdown capabilities.
 
 ## Features
 
-- 🔌 Control Kasa smart strip plugs (turn on/off individual speakers)
+- 🔌 Control Kasa smart strip plugs (turn on/off individual plugs)
 - 🚀 Auto-start speakers on application launch
 - 🛑 Hybrid shutdown: Manual "Turn Off & Shutdown" button + automatic before-quit detection
 - 💾 Persistent settings and logs
