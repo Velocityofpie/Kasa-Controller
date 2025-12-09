@@ -2,6 +2,8 @@
 
 This document explains how the auto-update feature works and how to publish updates for the Kasa Speaker Controller.
 
+![Dashboard](docs/Kasa_Speaker_Controller_U6fLMdWyok.png)
+
 ## How It Works
 
 The app uses `electron-updater` to check for and download updates from GitHub Releases. When a new version is available:
